@@ -1,49 +1,66 @@
-# ——— Compiler settings ———
-CXX       := g++
-CXXFLAGS  := -std=c++98 -Wall -Wextra -Wshadow -Werror \
-             -Iinclude -g
-LDFLAGS   :=
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: you <you@student.42.fr>                    +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/11/24  by you                      #+#    #+#              #
+#    Updated: 2025/11/24  by you                      ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-# ——— Directories ———
-SRC_DIR   := src
-OBJ_DIR   := build/obj
-BIN_DIR   := build
+# Name of the final executable
+NAME        = webserv
 
-# ——— Source files ———
-SRCS      := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS      := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+# Compiler and flags
+# -std=c++98 is required by the subject
+CXX         = c++
+CXXFLAGS    = -Wall -Wextra -Werror -std=c++98
 
-# ——— Final target ———
-TARGET    := $(BIN_DIR)/webserv
+# Folders
+SRCDIR      = src
+INCDIR      = include
 
-# ——— Default rule ———
-.PHONY: all
-all: $(TARGET)
+# Source files for now: only main.cpp
+# We will add more .cpp files here in later steps.
+SRCS        = $(SRCDIR)/main.cpp \
+			  $(SRCDIR)/WebServer.cpp \
+ 		      $(SRCDIR)/HttpRequest.cpp \
+ 		      $(SRCDIR)/HttpResponse.cpp \
+			  $(SRCDIR)/Config.cpp
 
-# ——— Link step ———
-$(TARGET): $(OBJS) | $(BIN_DIR)
-	@echo "Linking $@"
-	$(CXX) $(LDFLAGS) -o $@ $^
+# Object files (same names, but .o extension)
+OBJS        = $(SRCS:.cpp=.o)
 
-# ——— Compile step ———
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Command to remove files
+RM          = rm -f
 
-# ——— Create build dirs ———
-$(OBJ_DIR) $(BIN_DIR):
-	@mkdir -p $@
+# Default rule: build the executable
+all: $(NAME)
 
-# ——— Convenience run target ———
-# Example: make run ARGS="config/webserv.conf"
-.PHONY: run
-run: all
-	@echo "Running $(TARGET) $(ARGS)"
-	$(TARGET) $(ARGS)
+# Link step:
+# If none of the object files changed, this rule won't run,
+# so there is no unnecessary relinking (as required by 42).
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
-# ——— Clean up ———
-.PHONY: clean
+# Generic rule to compile any .cpp into a .o
+# -I$(INCDIR) tells the compiler where to find our headers (we'll use it later).
+$(SRCDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
+
+# Remove compiled object files
 clean:
-	@echo "Cleaning build artifacts"
-	@rm -rf $(OBJ_DIR)/*.o $(TARGET)
+	$(RM) $(OBJS)
+
+# Remove objects + executable
+fclean: clean
+	$(RM) $(NAME)
+
+# Rebuild everything from scratch
+re: fclean all
+
+# Mark these targets as "phony" so make doesn't confuse them with real files
+.PHONY: all clean fclean re
 
